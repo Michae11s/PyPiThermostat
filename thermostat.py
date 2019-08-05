@@ -8,12 +8,14 @@
 #IMPORTS
 import paho.mqtt.client as mqtt
 import time
+import os
+from datetime import datetime as dt
 
 ####
 #CONFIGURATION VARS
 ####
 DeviceNum=1
-MQTTservAddr="localhost"
+MQTTservAddr="192.168.1.1"
 MQTTport=1883
 MQTTuser="openhab"
 MQTTpass="michaels"
@@ -36,11 +38,16 @@ PollingRate=15
 
 ThermI2Caddr=0xFF
 
-###
-# global vars
-###
+###############
+# global vars #
+###############
+logFile='sensor.log'
+scheduleFile='.schedule'
 
-preamb="null"
+#schedule variables
+scizm=[]
+
+preamb="/home/thermostats/" + str(DeviceNum) + "/"
 
 OnTime=0
 OffTime=0
@@ -75,9 +82,11 @@ def pole():
     if(hum != lasthum):
         lasthum=hum
         mqc.publish(str(preamb + "hum"),hum,0,True)
+        print("temp set to: " + str(temp))
     if(temp != lasttemp):
         lasttemp=temp
         mqc.publish(str(preamb + "temperature"),temp,0,True)
+        print("humitiy set to: " + str(hum))
 
 # function turn on or off heating as appropriate
 def heatActiv():
@@ -121,7 +130,32 @@ def heatActiv():
 # funtion to change the setpoint based on a schedule
 def scheduleAdjust():
     global setpoint
-    setpoint=setpoint
+    for splitz in scizm:
+        cdt=dt.now()
+        tim=int(cdt.strftime("%H%M"))
+        if(splitz[0] == tim):
+            setpoint=splitz[2]
+            mqc.publish(preamb+"setpoint",setpoint,0,True)
+
+def scheduleImport():
+    #incase we can't connect to the broker still want to run the last known schedule
+    global scizm
+    global setpoint
+    global endTime
+
+    if(os.path.exists(scheduleFile)):
+        #Import the file
+        SF=open(scheduleFile, "r")
+        for splits in SF.readlines():
+            splitd=splits.split(":")
+            scizm.append(list(map(int,splitd)))
+
+        for splitz in scizm:
+            cdt=dt.now()
+            tim=int(cdt.strftime("%H%M"))
+            if(splitz[0] <= tim and tim <= splitz[1]):
+                setpoint=splitz[2]
+                mqc.publish(preamb+"setpoint",setpoint,0,True)
 
 ###
 # MQTT setup
@@ -129,10 +163,8 @@ def scheduleAdjust():
 
 def on_connect(client, userdata, flags, rc):
     print("connected to mqtt: " + str(rc))
-    global preamb
 
-    #subsribe on the connect in order to refresh if the client disconnects and reconnects
-    preamb="/home/thermostats/" + str(DeviceNum) + "/"
+    #subsribe on the connect in order to refresh if the client disconnects and reconnect
     #mqc.subsribe(preamb + "temperature")
     mqc.subscribe(preamb + "setpoint")
     mqc.subscribe(preamb + "mode")
@@ -143,6 +175,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     global setpoint
     global mode
+    global scizm
     print("topic updated:" + str(msg.topic) + ":" + str(msg.payload))
     pay=msg.payload.decode("utf-8")
 
@@ -152,14 +185,26 @@ def on_message(client, userdata, msg):
             if(setMax >= set and set >= setMin):
                 setpoint=set
                 print("new setpoint:" + str(setpoint))
+            else:
+                mqc.publish(preamb+"setpoint",setpoint,0,True)
+                print("attempted to set a heating value out of bounds, pushing back")
     elif(msg.topic == (preamb + "mode")):
         nmode=str(pay)
         if(nmode=="off" or nmode=="heat" or nmode=="eco"):
             mode=nmode
             print("new mode: " + mode)
     elif(msg.topic == (preamb + "schedule")):
-        schedule="null"
-        ###TRY TO PROCESS THE SCHEDULE
+        schedule=str(pay)
+        lines=schedule.split(";")
+        SF=open(scheduleFile, "w")
+        SF.writelines(lines)
+        SF.close()
+
+        #add lines to the scizm var
+        scizm.clear()
+        for line in lines:
+            splitd=line.split(":")
+            scizm.append(list(map(int,splitd)))
 
 mqc = mqtt.Client()
 
@@ -168,6 +213,9 @@ mqc.on_message = on_message
 
 mqc.username_pw_set(MQTTuser, password=MQTTpass)
 mqc.connect(MQTTservAddr,MQTTport)
+
+#not the primary method just used as a reserve incase the broker is down
+scheduleImport()
 
 #start the infinte loop
 #mqc.loop_start()
