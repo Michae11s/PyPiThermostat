@@ -10,6 +10,9 @@ import paho.mqtt.client as mqtt
 import time
 import os
 from datetime import datetime as dt
+import board
+import busio
+import adafruit_si7021 as asi
 
 ####
 #CONFIGURATION VARS
@@ -75,10 +78,14 @@ def pole():
     global lasttemp
     global lasthum
 
-    ###DO SOME SHIT WITH I2C to fetch the humidity until then lets lie
+    print('Temperature: {} degrees C'.format(sensor.temperature))
+    print('Humidity: {}%'.format(sensor.relative_humidity))
+    time.sleep(1)
 
-    temp=75.5
-    hum=85.5
+    ###DO SOME SHIT WITH I2C to fetch the humidity until then lets lie
+    temp=60.2
+    hum=40.5
+
     if(hum != lasthum):
         lasthum=hum
         mqc.publish(str(preamb + "hum"),hum,0,True)
@@ -158,7 +165,7 @@ def scheduleImport():
                 mqc.publish(preamb+"setpoint",setpoint,0,True)
 
 ###
-# MQTT setup
+# MQTT functions
 ###
 
 def on_connect(client, userdata, flags, rc):
@@ -206,6 +213,10 @@ def on_message(client, userdata, msg):
             splitd=line.split(":")
             scizm.append(list(map(int,splitd)))
 
+###
+# setup code
+###
+# mqtt setup
 mqc = mqtt.Client()
 
 mqc.on_connect = on_connect
@@ -214,8 +225,12 @@ mqc.on_message = on_message
 mqc.username_pw_set(MQTTuser, password=MQTTpass)
 mqc.connect(MQTTservAddr,MQTTport)
 
-#not the primary method just used as a reserve incase the broker is down
+# not the primary method just used as a reserve incase the broker is down
 scheduleImport()
+
+# i2c setup
+i2c=busio.I2C(board.SCL, board.SDA)
+sensor=asi.SI7021(i2c)
 
 #start the infinte loop
 #mqc.loop_start()
