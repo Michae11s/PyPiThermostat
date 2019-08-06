@@ -89,11 +89,11 @@ def pole():
     if(hum != lasthum):
         lasthum=hum
         mqc.publish(str(preamb + "hum"),hum,0,True)
-        print("temp set to: " + str(temp))
+        print("humidity set to: " + str(hum))
     if(temp != lasttemp):
         lasttemp=temp
         mqc.publish(str(preamb + "temperature"),temp,0,True)
-        print("humitiy set to: " + str(hum))
+        print("temperature set to: " + str(temp))
 
 # function turn on or off heating as appropriate
 def heatActiv():
