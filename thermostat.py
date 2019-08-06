@@ -78,13 +78,13 @@ def pole():
     global lasttemp
     global lasthum
 
-    print('Temperature: {} degrees C'.format(sensor.temperature))
-    print('Humidity: {}%'.format(sensor.relative_humidity))
-    time.sleep(1)
-
-    ###DO SOME SHIT WITH I2C to fetch the humidity until then lets lie
-    temp=60.2
-    hum=40.5
+    tempC=sensor.temperature
+    tempf=9.0/5.0*tempC+32.0
+    temp=round(tempf,1)
+    humidity=round(sensor.relative_humidity, 1)
+    #print('Temperature: {} degrees C'.format(sensor.temperature))
+    #print('Humidity: {}%'.format(sensor.relative_humidity))
+    #time.sleep(1)
 
     if(hum != lasthum):
         lasthum=hum
