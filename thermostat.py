@@ -81,8 +81,8 @@ def pole():
     tempC=sensor.temperature
     tempf=9.0/5.0*tempC+32.0
     temp=round(tempf,1)
-    humidity=round(sensor.relative_humidity, 1)
-    #print('Temperature: {} degrees C'.format(sensor.temperature))
+    hum=round(sensor.relative_humidity, 1)
+    print('temperature is: ' + str(temp) + ', and humidity is: ' + str(hum))
     #print('Humidity: {}%'.format(sensor.relative_humidity))
     #time.sleep(1)
 
