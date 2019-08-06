@@ -44,8 +44,8 @@ ThermI2Caddr=0xFF
 ###############
 # global vars #
 ###############
-logFile='sensor.log'
-scheduleFile='.schedule'
+logFile='/home/pi/build/PyPiThermostat/sensor.log'
+scheduleFile='/home/pi/build/PyPiThermostat/.schedule'
 
 #schedule variables
 scizm=[]
@@ -82,9 +82,14 @@ def pole():
     tempf=9.0/5.0*tempC+32.0
     temp=round(tempf,1)
     hum=round(sensor.relative_humidity, 1)
-    print('temperature is: ' + str(temp) + ', and humidity is: ' + str(hum))
+    #print('temperature is: ' + str(temp) + ', and humidity is: ' + str(hum))
     #print('Humidity: {}%'.format(sensor.relative_humidity))
     #time.sleep(1)
+    LF=open(logFile,"a")
+    tim=int(dt.now().strftime("%H%M%S"))
+    LF.write(str(tim)+","+str(temp)+","+str(hum)+"\n")
+    LF.close()
+
 
     if(hum != lasthum):
         lasthum=hum
@@ -236,6 +241,8 @@ sensor=asi.SI7021(i2c)
 #mqc.loop_start()
 while True:
     mqc.loop(timeout=1.0, max_packets=6)
+
+    
     #determine if we need to re pole
     if ((time.time()-lastTime) > PollingRate):
         lastTime=time.time()
