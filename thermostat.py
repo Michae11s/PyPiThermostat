@@ -13,6 +13,8 @@ from datetime import datetime as dt
 import board
 import busio
 import adafruit_si7021 as asi
+import digitalio as di
+import adafruit_character_lcd.character_lcd as char_lcd
 
 ####
 #CONFIGURATION VARS
@@ -128,12 +130,14 @@ def heatActiv():
         timenow=time.time()
         if((heaton=="ON") and (timenow > OffTime+minOFF)):
             ##*** Turn heat on here ***##
+            relay.value=True
             OnTime=timenow
             mqc.publish(preamb+"heaton",heaton,0,True)
             lastheaton=heaton
             print("we did! heat is now: " + str(heaton))
         if((heaton=="OFF") and (timenow > OnTime+minON)):
             ###*** Turn heat off here ***##
+            relay.value=False
             OffTime=timenow
             mqc.publish(preamb+"heaton",heaton,0,True)
             lastheaton=heaton
@@ -167,7 +171,13 @@ def scheduleImport():
             tim=int(cdt.strftime("%H%M"))
             if(splitz[0] <= tim and tim <= splitz[1]):
                 setpoint=splitz[2]
-                mqc.publish(preamb+"setpoint",setpoint,0,True)
+                #mqc.publish(preamb+"setpoint",setpoint,0,True)
+
+def displayUpdate():
+    tim=dt.now().strftime("%H:%M")
+    screen_home= str(tim) + " Set:" + str(setpoint) +"\x00F\n" + str(temp) + "\x00F H:" + str(hum) + "%"
+    lcd.clear()
+    lcd.message=screen_home
 
 ###
 # MQTT functions
@@ -218,6 +228,7 @@ def on_message(client, userdata, msg):
             splitd=line.split(":")
             scizm.append(list(map(int,splitd)))
 
+
 ###
 # setup code
 ###
@@ -237,12 +248,56 @@ scheduleImport()
 i2c=busio.I2C(board.SCL, board.SDA)
 sensor=asi.SI7021(i2c)
 
+#16x2 char lcd setup
+lcd_rs = di.DigitalInOut(board.D25)
+lcd_en = di.DigitalInOut(board.D24)
+lcd_d7 = di.DigitalInOut(board.D22)
+lcd_d6 = di.DigitalInOut(board.D18)
+lcd_d5 = di.DigitalInOut(board.D17)
+lcd_d4 = di.DigitalInOut(board.D23)
+lcd_backlight = di.DigitalInOut(board.D27)
+
+lcd_columns = 16
+lcd_rows = 2
+
+lcd = char_lcd.Character_LCD_Mono(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows, lcd_backlight)
+lcd.clear()
+lcd.message = "Starting...\nThermostat " + str(DeviceNum)
+lcd.backlight = True
+lcd.cursor = False
+
+#create degree symbol
+deg = bytes([0x2, 0x5, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0])
+#deg = bytes([0x4, 0xa, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0])
+# Store in LCD character memory 0
+lcd.create_char(0, deg)
+
+#Create gpio pins
+#relay pin
+relay= di.DigitalInOut(board.D26)
+relay.direction = di.Direction.OUTPUT
+
+#up button
+btnUp=di.DigitalInOut(board.D6)
+btnUp.direction = di.Direction.INPUT
+btnUp.pull = di.Pull.UP
+
+#sel button
+btnSel=di.DigitalInOut(board.D13)
+btnSel.direction = di.Direction.INPUT
+btnSel.pull = di.Pull.UP
+
+#down button
+btnDn=di.DigitalInOut(board.D19)
+btnDn.direction = di.Direction.INPUT
+btnDn.pull = di.Pull.UP
+
 #start the infinte loop
 #mqc.loop_start()
 while True:
     mqc.loop(timeout=1.0, max_packets=6)
 
-    
+
     #determine if we need to re pole
     if ((time.time()-lastTime) > PollingRate):
         lastTime=time.time()
@@ -252,6 +307,8 @@ while True:
         heatActiv()
 
         scheduleAdjust()
+
+        displayUpdate()
 
 #mqc.loop_stop()
 mqc.disconnect()
