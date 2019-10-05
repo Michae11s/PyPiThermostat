@@ -6,6 +6,7 @@
 #####################################################\
 
 #IMPORTS
+import sys
 import paho.mqtt.client as mqtt
 import time
 import os
@@ -15,6 +16,12 @@ import busio
 import adafruit_si7021 as asi
 import digitalio as di
 import adafruit_character_lcd.character_lcd as char_lcd
+
+###
+#Print to file instead of terminal
+###
+
+sys.stdout = open('/home/pi/build/PyPiThermostat/py.log', 'w')
 
 ####
 #CONFIGURATION VARS
