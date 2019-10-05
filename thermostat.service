@@ -2,7 +2,7 @@
 Description=starts thermostat.py at boot and restarts it if it dies
 
 [Service]
-ExecStart=/usr/bin/python3 /home/pi/build/PyPiThermostat/thermostat.py
+ExecStart=/usr/bin/python3 /home/pi/build/PyPiThermostat/thermostat.py > /home/pi/build/PyPiThermostat/py.log
 Restart=always
 RestartSec=15
 User=pi
