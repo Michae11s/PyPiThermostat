@@ -32,6 +32,66 @@ class Logger(object):
 
 sys.stdout = Logger("/home/pi/build/PyPiThermostat/py.log")
 
+class Schedule(object):
+    def __init__(self, filename="schedule.csv"):
+        self.filename=filename
+        self.sun = []
+        self.mon = []
+        self.tues = []
+        self.wed = []
+        self.thurs = []
+        self.fri = []
+        self.sat = []
+        self.wait = 26
+        self.imprt()
+
+    def imprt(self):
+        if(os.path.exists(self.filename)):
+            #Import the file
+            SF=open(self.filename, "r")
+            for splits in SF.readlines():
+                splitd=splits.split(",")
+                if(splitd[1] != "Sun"):
+                    self.sun.append(splitd[1])
+                    self.mon.append(splitd[2])
+                    self.tues.append(splitd[3])
+                    self.wed.append(splitd[4])
+                    self.thurs.append(splitd[5])
+                    self.fri.append(splitd[6])
+                    self.sat.append(splitd[7])
+        else:
+            print("error schedule file not found")
+
+    def schTemp(self):
+        Hr=int(dt.now().strftime("%H"))
+        weekDay=dt.today().weekday()
+        if(weekDay == 0):
+            return(self.mon[Hr])
+        elif(weekDay == 1):
+            return(self.tues[Hr])
+        elif(weekDay == 2):
+            return(self.wed[Hr])
+        elif(weekDay == 3):
+            return(self.thurs[Hr])
+        elif(weekDay == 4):
+            return(self.fri[Hr])
+        elif(weekDay == 5):
+            return(self.sat[Hr])
+        elif(weekDay == 6):
+            return(self.sun[Hr])
+
+    def setWait(self):
+        Hr=int(dt.now().strftime("%H"))
+        if(Hr == 22):
+            self.wait=00
+        elif(Hr == 23):
+            self.wait=01
+        else:
+            self.wait=Hr+2
+
+    def clrWait(self):
+        self.wait=26
+
 ####
 #CONFIGURATION VARS
 ####
@@ -51,8 +111,8 @@ ecoRange=5
 ThermostatRange=1.0 #max distance temp can be below setpoint before heat kicks on
 
 #min on off times seconds
-minON=5
-minOFF=5
+minON=60
+minOFF=60
 
 #amount of time between samples in seconds
 PollingRate=15
@@ -63,9 +123,10 @@ ThermI2Caddr=0xFF
 # global vars #
 ###############
 logFile='/home/pi/build/PyPiThermostat/sensor.log'
-scheduleFile='/home/pi/build/PyPiThermostat/.schedule'
+scheduleFile='/home/pi/build/PyPiThermostat/schedule.csv'
 
 #schedule variables
+shed = Schedule(scheduleFile)
 scizm=[]
 
 preamb="/home/thermostats/" + str(DeviceNum) + "/"
@@ -161,33 +222,16 @@ def heatActiv():
 
 # funtion to change the setpoint based on a schedule
 def scheduleAdjust():
+    Hr=int(dt.now().strftime("%H"))
     global setpoint
-    for splitz in scizm:
-        cdt=dt.now()
-        tim=int(cdt.strftime("%H%M"))
-        if(splitz[0] == tim):
-            setpoint=splitz[2]
+    if(shed.wait != 26): #make sure we aren't waiting
+        new=shed.schTemp()
+        if(new != setpoint): #check for a change
+            setpoint=new
             mqc.publish(preamb+"setpoint",setpoint,0,True)
+    elif(Hr == shed.wait):#we must be waiting, check if we are done
+        shed.clrWait()
 
-def scheduleImport():
-    #incase we can't connect to the broker still want to run the last known schedule
-    global scizm
-    global setpoint
-    global endTime
-
-    if(os.path.exists(scheduleFile)):
-        #Import the file
-        SF=open(scheduleFile, "r")
-        for splits in SF.readlines():
-            splitd=splits.split(":")
-            scizm.append(list(map(int,splitd)))
-
-        for splitz in scizm:
-            cdt=dt.now()
-            tim=int(cdt.strftime("%H%M"))
-            if(splitz[0] <= tim and tim <= splitz[1]):
-                setpoint=splitz[2]
-                #mqc.publish(preamb+"setpoint",setpoint,0,True)
 
 def displayUpdate():
     tim=dt.now().strftime("%H:%M")
@@ -222,6 +266,7 @@ def on_message(client, userdata, msg):
             set=int(pay)
             if(setMax >= set and set >= setMin):
                 setpoint=set
+                shed.setWait()
                 print("new setpoint:" + str(setpoint))
             else:
                 mqc.publish(preamb+"setpoint",setpoint,0,True)
@@ -231,18 +276,18 @@ def on_message(client, userdata, msg):
         if(nmode=="off" or nmode=="heat" or nmode=="eco"):
             mode=nmode
             print("new mode: " + mode)
-    elif(msg.topic == (preamb + "schedule")):
-        schedule=str(pay)
-        lines=schedule.split(";")
-        SF=open(scheduleFile, "w")
-        SF.writelines(lines)
-        SF.close()
-
-        #add lines to the scizm var
-        scizm.clear()
-        for line in lines:
-            splitd=line.split(":")
-            scizm.append(list(map(int,splitd)))
+    # elif(msg.topic == (preamb + "schedule")):
+    #     schedule=str(pay)
+    #     lines=schedule.split(";")
+    #     SF=open(scheduleFile, "w")
+    #     SF.writelines(lines)
+    #     SF.close()
+    #
+    #     #add lines to the scizm var
+    #     scizm.clear()
+    #     for line in lines:
+    #         splitd=line.split(":")
+    #         scizm.append(list(map(int,splitd)))
 
 
 ###

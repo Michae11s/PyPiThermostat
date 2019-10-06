@@ -1,5 +1,7 @@
 #project specific ignores
 .schedule
+temp.py
+py.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
