@@ -226,7 +226,7 @@ def scheduleAdjust():
     global setpoint
     if(Hr==0):
         shed.imprt()
-    if(shed.wait != 26): #make sure we aren't waiting
+    if(shed.wait == 26): #make sure we aren't waiting
         new=shed.schTemp()
         if(int(new) != int(setpoint)): #check for a change
             print("updating setpoint according to schedule")
