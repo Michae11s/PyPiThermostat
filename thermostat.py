@@ -228,7 +228,8 @@ def scheduleAdjust():
         shed.imprt()
     if(shed.wait != 26): #make sure we aren't waiting
         new=shed.schTemp()
-        if(new != setpoint): #check for a change
+        if(int(new) != int(setpoint)): #check for a change
+            print("updating setpoint according to schedule")
             setpoint=new
             mqc.publish(preamb+"setpoint",setpoint,0,True)
     elif(Hr == shed.wait):#we must be waiting, check if we are done
