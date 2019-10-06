@@ -224,6 +224,7 @@ def heatActiv():
 def scheduleAdjust():
     Hr=int(dt.now().strftime("%H"))
     global setpoint
+#    print(shed.wait)
     if(Hr==0):
         shed.imprt()
     if(shed.wait == 26): #make sure we aren't waiting
@@ -268,9 +269,10 @@ def on_message(client, userdata, msg):
         if(pay.isdigit()):
             set=int(pay)
             if(setMax >= set and set >= setMin):
-                setpoint=set
-                shed.setWait()
-                print("new setpoint:" + str(setpoint))
+                if(set != setpoint):
+                    setpoint=set
+                    shed.setWait()
+                    print("new setpoint:" + str(setpoint))
             else:
                 mqc.publish(preamb+"setpoint",setpoint,0,True)
                 print("attempted to set a heating value out of bounds, pushing back")
