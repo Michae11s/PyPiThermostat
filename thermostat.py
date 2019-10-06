@@ -83,9 +83,9 @@ class Schedule(object):
     def setWait(self):
         Hr=int(dt.now().strftime("%H"))
         if(Hr == 22):
-            self.wait=00
+            self.wait=0
         elif(Hr == 23):
-            self.wait=01
+            self.wait=1
         else:
             self.wait=Hr+2
 
@@ -224,6 +224,8 @@ def heatActiv():
 def scheduleAdjust():
     Hr=int(dt.now().strftime("%H"))
     global setpoint
+    if(Hr==0):
+        shed.imprt()
     if(shed.wait != 26): #make sure we aren't waiting
         new=shed.schTemp()
         if(new != setpoint): #check for a change
@@ -301,9 +303,6 @@ mqc.on_message = on_message
 
 mqc.username_pw_set(MQTTuser, password=MQTTpass)
 mqc.connect(MQTTservAddr,MQTTport)
-
-# not the primary method just used as a reserve incase the broker is down
-scheduleImport()
 
 # i2c setup
 i2c=busio.I2C(board.SCL, board.SDA)
