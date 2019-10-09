@@ -51,13 +51,13 @@ class Schedule(object):
             for splits in SF.readlines():
                 splitd=splits.split(",")
                 if(splitd[1] != "Sun"):
-                    self.sun.append(splitd[1])
-                    self.mon.append(splitd[2])
-                    self.tues.append(splitd[3])
-                    self.wed.append(splitd[4])
-                    self.thurs.append(splitd[5])
-                    self.fri.append(splitd[6])
-                    self.sat.append(splitd[7])
+                    self.sun.append(int(splitd[1]))
+                    self.mon.append(int(splitd[2]))
+                    self.tues.append(int(splitd[3]))
+                    self.wed.append(int(splitd[4]))
+                    self.thurs.append(int(splitd[5]))
+                    self.fri.append(int(splitd[6]))
+                    self.sat.append(int(splitd[7]))
         else:
             logging.warning("SCHEDULE:import failed! Defaulting to 65 accross the board")
             for i in range(0,24):
