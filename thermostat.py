@@ -137,7 +137,7 @@ OnTime=0
 OffTime=0
 
 setpoint=70.0
-mode="heat"
+mode="off"
 temp=0.0
 hum=0
 heaton="null"
