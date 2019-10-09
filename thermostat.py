@@ -240,7 +240,7 @@ def scheduleAdjust():
         new=shed.schTemp()
         if(int(new) != int(setpoint)): #check for a change
             logging.info("SCHEDULE:setpoint isn't as scheduled, updating")
-            logging.info("SCHEDULE:setpoint is" + str(new))
+            logging.info("SCHEDULE:setpoint is: " + str(new))
             setpoint=new
             mqc.publish(preamb+"setpoint",setpoint,0,True)
     elif(Hr == shed.wait):#we must be waiting, check if we are done
@@ -283,7 +283,7 @@ def on_message(client, userdata, msg):
                 if(set != setpoint):
                     setpoint=set
                     shed.setWait()
-                    logging.info("MQTT:New setpoint from broker:" + str(setpoint))
+                    logging.info("MQTT:New setpoint from broker: " + str(setpoint))
             else:
                 mqc.publish(preamb+"setpoint",setpoint,0,True)
                 logging.warning("MQTT:broker attempted setpoint that is out of bounds, overriding")
