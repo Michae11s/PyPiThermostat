@@ -22,7 +22,12 @@ import logging
 # Setup logging to a file
 ###
 
-logging.basicConfig(filename='/home/pi/build/PyPiThermostat/py.log',filemode="w",level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s:%(levelname)s:%(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d[%H:%M:%S]',
+    filename='/home/pi/build/PyPiThermostat/py.log',
+    filemode="w")
 
 #create the schedule object
 class Schedule(object):
