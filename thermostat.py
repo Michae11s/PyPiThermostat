@@ -18,20 +18,12 @@ import digitalio as di
 import adafruit_character_lcd.character_lcd as char_lcd
 
 ###
-#Print to file instead of terminal
+# Setup logging to a file
 ###
 
-class Logger(object):
-    def __init__(self, filename="Default.log"):
-        self.terminal = sys.stdout
-        self.log = open(filename, "a")
+logging.basicConfig(filename='/home/pi/build/PyPiThermostat/py.log',filemode="w",level=logging.DEBUG)
 
-    def write(self, message):
-        self.terminal.write(message)
-        self.log.write(message)
-
-sys.stdout = Logger("/home/pi/build/PyPiThermostat/py.log")
-
+#create the schedule object
 class Schedule(object):
     def __init__(self, filename="schedule.csv"):
         self.filename=filename
@@ -47,6 +39,7 @@ class Schedule(object):
 
     def imprt(self):
         if(os.path.exists(self.filename)):
+            logging.debug("SCHEUDLE:import file found, importing")
             #Import the file
             SF=open(self.filename, "r")
             for splits in SF.readlines():
@@ -60,7 +53,15 @@ class Schedule(object):
                     self.fri.append(splitd[6])
                     self.sat.append(splitd[7])
         else:
-            print("error schedule file not found")
+            logging.warning("SCHEDULE:import failed! Defaulting to 65 accross the board")
+            for i in range(0,24):
+                self.sun.append(65)
+                self.mon.append(65)
+                self.tues.append(65)
+                self.wed.append(65)
+                self.thurs.append(65)
+                self.fri.append(65)
+                self.sat.append(65)
 
     def schTemp(self):
         Hr=int(dt.now().strftime("%H"))
@@ -161,8 +162,8 @@ def pole():
     tempf=9.0/5.0*tempC+32.0
     temp=round(tempf,1)
     hum=round(sensor.relative_humidity, 1)
-    #print('temperature is: ' + str(temp) + ', and humidity is: ' + str(hum))
-    #print('Humidity: {}%'.format(sensor.relative_humidity))
+    logging.debug('temperature is: ' + str(temp) + ', and humidity is: ' + str(hum))
+    logging.debug('Humidity: {}%'.format(sensor.relative_humidity))
     #time.sleep(1)
     LF=open(logFile,"a")
     tim=int(dt.now().strftime("%H%M%S"))
@@ -173,11 +174,11 @@ def pole():
     if(hum != lasthum):
         lasthum=hum
         mqc.publish(str(preamb + "hum"),hum,0,True)
-        print("humidity set to: " + str(hum))
+        logging.debug("MQTT EVENT::humidity=" + str(hum))
     if(temp != lasttemp):
         lasttemp=temp
         mqc.publish(str(preamb + "temperature"),temp,0,True)
-        print("temperature set to: " + str(temp))
+        logging.debug("MQTT EVENT:temperature=" + str(temp))
 
 # function turn on or off heating as appropriate
 def heatActiv():
@@ -203,7 +204,7 @@ def heatActiv():
             heaton="ON"
 
     if(lastheaton!=heaton):
-        print("we want to toggle the heaters")
+        logging.info("HEATING:We want to toggle the heat")
         timenow=time.time()
         if((heaton=="ON") and (timenow > OffTime+minOFF)):
             ##*** Turn heat on here ***##
@@ -211,29 +212,33 @@ def heatActiv():
             OnTime=timenow
             mqc.publish(preamb+"heaton",heaton,0,True)
             lastheaton=heaton
-            print("we did! heat is now: " + str(heaton))
-        if((heaton=="OFF") and (timenow > OnTime+minON)):
+            logging.info("HEATING:Heat is now: " + str(heaton))
+        elif((heaton=="OFF") and (timenow > OnTime+minON)):
             ###*** Turn heat off here ***##
             relay.value=False
             OffTime=timenow
             mqc.publish(preamb+"heaton",heaton,0,True)
             lastheaton=heaton
-            print("we did! heat is now: " + str(heaton))
+            logging.info("HEATING:Heat is now: " + str(heaton))
+        else:
+            logging.warning("HEATING:No toggle it hasn't been long enough")
 
 # funtion to change the setpoint based on a schedule
 def scheduleAdjust():
     Hr=int(dt.now().strftime("%H"))
     global setpoint
-#    print(shed.wait)
     if(Hr==0):
+        logging.info("SCHEDULE:Day begins reimport the schedule for any changes")
         shed.imprt()
     if(shed.wait == 26): #make sure we aren't waiting
         new=shed.schTemp()
         if(int(new) != int(setpoint)): #check for a change
-            print("updating setpoint according to schedule")
+            logging.info("SCHEDULE:setpoint isn't as scheduled, updating")
+            logging.info("SCHEDULE:setpoint is" + str(new))
             setpoint=new
             mqc.publish(preamb+"setpoint",setpoint,0,True)
     elif(Hr == shed.wait):#we must be waiting, check if we are done
+        logging.debug("SCHEDULE:we have waited long enough! resuming scheduled temperatures")
         shed.clrWait()
 
 
@@ -248,7 +253,7 @@ def displayUpdate():
 ###
 
 def on_connect(client, userdata, flags, rc):
-    print("connected to mqtt: " + str(rc))
+    logging.info("MQTT:connected to: " + str(rc))
 
     #subsribe on the connect in order to refresh if the client disconnects and reconnect
     #mqc.subsribe(preamb + "temperature")
@@ -262,7 +267,7 @@ def on_message(client, userdata, msg):
     global setpoint
     global mode
     global scizm
-    print("topic updated:" + str(msg.topic) + ":" + str(msg.payload))
+    logging.debug("MQTT:topic update from broker::" + str(msg.topic) + ":" + str(msg.payload))
     pay=msg.payload.decode("utf-8")
 
     if(msg.topic == (preamb + "setpoint")):
@@ -272,15 +277,15 @@ def on_message(client, userdata, msg):
                 if(set != setpoint):
                     setpoint=set
                     shed.setWait()
-                    print("new setpoint:" + str(setpoint))
+                    logging.info("MQTT:New setpoint from broker:" + str(setpoint))
             else:
                 mqc.publish(preamb+"setpoint",setpoint,0,True)
-                print("attempted to set a heating value out of bounds, pushing back")
+                logging.warning("MQTT:broker attempted setpoint that is out of bounds, overriding")
     elif(msg.topic == (preamb + "mode")):
         nmode=str(pay)
         if(nmode=="off" or nmode=="heat" or nmode=="eco"):
             mode=nmode
-            print("new mode: " + mode)
+            logging.warning("MQTT:New mode set from broker: " + mode)
     # elif(msg.topic == (preamb + "schedule")):
     #     schedule=str(pay)
     #     lines=schedule.split(";")
