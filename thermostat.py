@@ -22,7 +22,7 @@ import logging
 # Setup logging to a file
 ###
 
-logging.basicConfig(filename='/home/pi/build/PyPiThermostat/py.log',filemode="w",level=logging.DEBUG)
+logging.basicConfig(filename='/home/pi/build/PyPiThermostat/py.log',filemode="w",level=logging.INFO)
 
 #create the schedule object
 class Schedule(object):
@@ -164,7 +164,7 @@ def pole():
     temp=round(tempf,1)
     hum=round(sensor.relative_humidity, 1)
     logging.debug('temperature is: ' + str(temp) + ', and humidity is: ' + str(hum))
-    logging.debug('Humidity: {}%'.format(sensor.relative_humidity))
+    #logging.debug('Humidity: {}%'.format(sensor.relative_humidity))
     #time.sleep(1)
     LF=open(logFile,"a")
     tim=int(dt.now().strftime("%H%M%S"))
