@@ -16,6 +16,7 @@ import busio
 import adafruit_si7021 as asi
 import digitalio as di
 import adafruit_character_lcd.character_lcd as char_lcd
+import logging
 
 ###
 # Setup logging to a file
