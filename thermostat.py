@@ -28,7 +28,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d|%H:%M:%S',
     filename='/home/pi/build/PyPiThermostat/py.log')
 
-logging.warning("SCRIPT STARTING")
+logging.warning("==========STARTING============")
 
 #create the schedule object
 class Schedule(object):
@@ -418,3 +418,5 @@ while True:
 
 #mqc.loop_stop()
 mqc.disconnect()
+
+logging.warning("==========Exited Cleanly============")
