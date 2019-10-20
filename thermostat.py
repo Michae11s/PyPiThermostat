@@ -27,7 +27,7 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d|%H:%M:%S',
     filename='/home/pi/build/PyPiThermostat/py.log',
-    filemode="w")
+    filemode="w+")
 
 #create the schedule object
 class Schedule(object):
@@ -232,8 +232,9 @@ def heatActiv():
 # funtion to change the setpoint based on a schedule
 def scheduleAdjust():
     Hr=int(dt.now().strftime("%H"))
+    Tim=int(dt.now().strftime("%H%M"))
     global setpoint
-    if(Hr==0):
+    if(Tim==0):
         logging.info("SCHEDULE:Day begins reimport the schedule for any changes")
         shed.imprt()
     if(shed.wait == 26): #make sure we aren't waiting
