@@ -271,6 +271,13 @@ def on_connect(client, userdata, flags, rc):
         #mqc.subsribe(preamb + "hum")
         #mqc.subsribe(preamb + "heaton")
         mqc.subscribe(preamb + "schedule")
+        if(mqc.push_update):
+            mqc.publish(preamb+"setpoint",setpoint,0,True)
+            mqc.publish(str(preamb + "hum"),hum,0,True)
+            mqc.publish(str(preamb + "temperature"),temp,0,True)
+            mqc.publish(str(preamb + "heaton"),heaton,0,True)
+            mqc.publish(str(preamb + "mode"),mode,0,True)
+            mqc.push_update=False
     else:
         logging.warning("MQTT:Connecting Failed, return-code=" + str(rc))
 
@@ -310,19 +317,22 @@ def on_message(client, userdata, msg):
     #         splitd=line.split(":")
     #         scizm.append(list(map(int,splitd)))
 
-def on_dissconnect(client, userdata, rc):
+def on_disconnect(client, userdata, rc):
     mqc.connected_flag=False
-    logging.warning("MQTT:DISCONNECTED FROM BROKER, RETURNE=" + str(rc))
+    logging.warning("MQTT:DISCONNECTED FROM BROKER, RETURNED=" + str(rc))
+    mqc.push_update=True
 
 ###
 # setup code
 ###
 # mqtt setup
 mqtt.Client.connected_flag=False #create flag in class
+mqtt.Clinet.push_update=False
 mqc = mqtt.Client()
 
 mqc.on_connect = on_connect
 mqc.on_message = on_message
+mqc.on_disconnect = on_disconnect
 
 mqc.username_pw_set(MQTTuser, password=MQTTpass)
 mqc.connect(MQTTservAddr,MQTTport)
