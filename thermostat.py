@@ -260,15 +260,19 @@ def displayUpdate():
 ###
 
 def on_connect(client, userdata, flags, rc):
-    logging.info("MQTT:connected to: " + str(rc))
+    if rc==0:
+        mqc.connected_flag=True
+        logging.info("MQTT:connected")
 
-    #subsribe on the connect in order to refresh if the client disconnects and reconnect
-    #mqc.subsribe(preamb + "temperature")
-    mqc.subscribe(preamb + "setpoint")
-    mqc.subscribe(preamb + "mode")
-    #mqc.subsribe(preamb + "hum")
-    #mqc.subsribe(preamb + "heaton")
-    mqc.subscribe(preamb + "schedule")
+        #subsribe on the connect in order to refresh if the client disconnects and reconnect
+        #mqc.subsribe(preamb + "temperature")
+        mqc.subscribe(preamb + "setpoint")
+        mqc.subscribe(preamb + "mode")
+        #mqc.subsribe(preamb + "hum")
+        #mqc.subsribe(preamb + "heaton")
+        mqc.subscribe(preamb + "schedule")
+    else:
+        logging.warning("MQTT:Connecting Failed, return-code=" + str(rc))
 
 def on_message(client, userdata, msg):
     global setpoint
@@ -306,11 +310,15 @@ def on_message(client, userdata, msg):
     #         splitd=line.split(":")
     #         scizm.append(list(map(int,splitd)))
 
+def on_dissconnect(client, userdata, rc):
+    mqc.connected_flag=False
+    logging.warning("MQTT:DISCONNECTED FROM BROKER, RETURNE=" + str(rc))
 
 ###
 # setup code
 ###
 # mqtt setup
+mqtt.Client.connected_flag=False #create flag in class
 mqc = mqtt.Client()
 
 mqc.on_connect = on_connect
@@ -370,7 +378,10 @@ btnDn.pull = di.Pull.UP
 #start the infinte loop
 #mqc.loop_start()
 while True:
-    mqc.loop(timeout=1.0, max_packets=6)
+    if mqc.connected_flag:
+        mqc.loop(timeout=1.0, max_packets=6)
+    else:
+        mqc.connect(MQTTservAddr,MQTTport)
 
 
     #determine if we need to re pole
