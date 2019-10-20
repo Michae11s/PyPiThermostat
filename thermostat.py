@@ -24,7 +24,7 @@ import logging
 
 logging.basicConfig(
     format='%(asctime)-19s:%(levelname)s:%(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     datefmt='%Y-%m-%d|%H:%M:%S',
     filename='/home/pi/build/PyPiThermostat/py.log',
     filemode="w+")
@@ -260,6 +260,7 @@ def displayUpdate():
 ###
 
 def on_connect(client, userdata, flags, rc):
+    logging.debug("in the on connect method")
     if(int(rc) == 0):
         mqc.connected_flag=True
         logging.info("MQTT:connected")
