@@ -327,7 +327,7 @@ def on_disconnect(client, userdata, rc):
 ###
 # mqtt setup
 mqtt.Client.connected_flag=False #create flag in class
-mqtt.Clinet.push_update=False
+mqtt.Client.push_update=False
 mqc = mqtt.Client()
 
 mqc.on_connect = on_connect
