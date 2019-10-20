@@ -260,7 +260,7 @@ def displayUpdate():
 ###
 
 def on_connect(client, userdata, flags, rc):
-    if rc==0:
+    if(int(rc) == 0):
         mqc.connected_flag=True
         logging.info("MQTT:connected")
 
