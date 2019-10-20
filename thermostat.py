@@ -24,10 +24,11 @@ import logging
 
 logging.basicConfig(
     format='%(asctime)-19s:%(levelname)s:%(message)s',
-    level=logging.DEBUG,
+    level=logging.INFO,
     datefmt='%Y-%m-%d|%H:%M:%S',
-    filename='/home/pi/build/PyPiThermostat/py.log',
-    filemode="w+")
+    filename='/home/pi/build/PyPiThermostat/py.log')
+
+logging.warning("SCRIPT STARTING")
 
 #create the schedule object
 class Schedule(object):
@@ -45,7 +46,7 @@ class Schedule(object):
 
     def imprt(self):
         if(os.path.exists(self.filename)):
-            logging.debug("SCHEUDLE:import file found, importing")
+            logging.debug("SCHEDULE:import file found, importing")
             #Import the file
             SF=open(self.filename, "r")
             for splits in SF.readlines():
@@ -180,11 +181,11 @@ def pole():
     if(hum != lasthum):
         lasthum=hum
         mqc.publish(str(preamb + "hum"),hum,0,True)
-        logging.debug("MQTT EVENT::humidity=" + str(hum))
+        logging.debug("MQTT:Publish:humidity=" + str(hum))
     if(temp != lasttemp):
         lasttemp=temp
         mqc.publish(str(preamb + "temperature"),temp,0,True)
-        logging.debug("MQTT EVENT:temperature=" + str(temp))
+        logging.debug("MQTT:Publish:temperature=" + str(temp))
 
 # function turn on or off heating as appropriate
 def heatActiv():
@@ -260,7 +261,7 @@ def displayUpdate():
 ###
 
 def on_connect(client, userdata, flags, rc):
-    logging.debug("in the on connect method")
+    #logging.debug("in the on connect method")
     if(int(rc) == 0):
         mqc.connected_flag=True
         logging.info("MQTT:connected")
@@ -327,16 +328,21 @@ def on_disconnect(client, userdata, rc):
 # setup code
 ###
 # mqtt setup
-mqtt.Client.connected_flag=False #create flag in class
-mqtt.Client.push_update=False
+#mqtt.Client.connected_flag=False #create flag in class
+#mqtt.Client.push_update=False
 mqc = mqtt.Client()
+mqc.connected_flag=False #create flag in class
+mqc.push_update=False
 
 mqc.on_connect = on_connect
 mqc.on_message = on_message
 mqc.on_disconnect = on_disconnect
 
 mqc.username_pw_set(MQTTuser, password=MQTTpass)
-mqc.connect(MQTTservAddr,MQTTport)
+try:
+    mqc.connect(MQTTservAddr,MQTTport)
+except:
+    logging.warning("MQTT:Connecting Faile, no RC Socket error")
 
 # i2c setup
 i2c=busio.I2C(board.SCL, board.SDA)
@@ -389,10 +395,7 @@ btnDn.pull = di.Pull.UP
 #start the infinte loop
 #mqc.loop_start()
 while True:
-    if mqc.connected_flag:
-        mqc.loop(timeout=1.0, max_packets=6)
-    else:
-        mqc.connect(MQTTservAddr,MQTTport)
+    mqc.loop(timeout=1.0, max_packets=6)
 
 
     #determine if we need to re pole
@@ -406,6 +409,12 @@ while True:
         scheduleAdjust()
 
         displayUpdate()
+
+        if not mqc.connected_flag:
+            try:
+                mqc.connect(MQTTservAddr,MQTTport)
+            except:
+                logging.warning("MQTT:Connecting Failed, no RC, Try Except Error")
 
 #mqc.loop_stop()
 mqc.disconnect()
