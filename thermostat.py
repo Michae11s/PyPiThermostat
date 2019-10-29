@@ -95,7 +95,7 @@ class Schedule(object):
         elif(Hr == 23):
             self.wait=1
         else:
-            self.wait=Hr+2
+            self.wait=Hr+4
 
     def clrWait(self):
         self.wait=26
