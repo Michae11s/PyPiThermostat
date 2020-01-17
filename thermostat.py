@@ -223,9 +223,9 @@ def heatActiv():
             lastheaton=heaton
             logging.info("HEATING:Heat is now: " + str(heaton))
             heatonTemp=temp
-            logging.debug("temp when heat was turned on" + str(heatonTemp))
+            logging.debug("temp when heat was turned on: " + str(heatonTemp))
             heatonTime=timenow
-            logging.debug("time the heat was turned on" + str(heatonTime))
+            logging.debug("time the heat was turned on: " + str(heatonTime))
         elif((heaton=="OFF") and (timenow > OnTime+minON)):
             ###*** Turn heat off here ***##
             relay.value=False
@@ -259,11 +259,11 @@ def scheduleAdjust():
 def detectFaults():
     if(heaton=="ON"):
         logging.debug("current temp " + str(temp))
-        if(temp <= heatonTemp + 0.5):
+        if(temp <= (heatonTemp + 0.5)):
             tim=time.time()
             logging.debug("Time now is " + str(tim))
 
-            if(tim >= heatonTime + 300):
+            if(tim >= (heatonTime + 300)):
                 logging.warning("HEATING:Heat has been running for 5 min, no increase in temperature! throwing flag")
                 mqc.publish(preamb+"paradoxFault",1,0,True) #set the flag
 
