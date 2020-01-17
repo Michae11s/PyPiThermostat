@@ -24,7 +24,7 @@ import logging
 
 logging.basicConfig(
     format='%(asctime)-19s:%(levelname)s:%(message)s',
-    level=logging.DEBUG,
+    level=logging.INFO,
     datefmt='%Y-%m-%d|%H:%M:%S',
     filename='/home/pi/build/PyPiThermostat/py.log')
 
@@ -195,6 +195,8 @@ def heatActiv():
     global heaton
     global OnTime
     global OffTime
+    global heatonTemp
+    global heatonTime
 
     #check our modes then make appropriate decisions
     if(mode=="off"):
@@ -222,7 +224,7 @@ def heatActiv():
             mqc.publish(preamb+"heaton",heaton,0,True)
             lastheaton=heaton
             logging.info("HEATING:Heat is now: " + str(heaton))
-            heatonTemp=temp
+            heatonTemp=temp+0.2
             logging.debug("temp when heat was turned on: " + str(heatonTemp))
             heatonTime=timenow
             logging.debug("time the heat was turned on: " + str(heatonTime))
@@ -258,8 +260,9 @@ def scheduleAdjust():
 # function to detect when the heat is on but not working
 def detectFaults():
     if(heaton=="ON"):
-        logging.debug("current temp " + str(temp))
-        if(temp <= (heatonTemp + 0.5)):
+        logging.debug("current temp :")
+        logging.debug(str(temp) + " " + str(heatonTemp))
+        if ( temp <= heatonTemp ):
             tim=time.time()
             logging.debug("Time now is " + str(tim))
 
