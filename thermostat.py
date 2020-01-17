@@ -422,6 +422,8 @@ while True:
 
         displayUpdate()
 
+        detectFaults()
+
         if not mqc.connected_flag:
             try:
                 mqc.connect(MQTTservAddr,MQTTport)
