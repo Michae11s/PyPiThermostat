@@ -257,7 +257,7 @@ def scheduleAdjust():
 def detectFaults():
     if(heaton=="ON"):
         tim=int(dt.now().strftime("%H%M"))
-        if((tim >= heatonTime + 5) and (temp < heatonTemp)):
+        if((tim >= heatonTime + 5) and (temp <= heatonTemp+0.5)):
             logging.warning("HEATING:Heat has been running for 5 min, no increase in temperature! throwing flag")
             mqc.publish(preamb+"paradoxFault",1,0,True) #set the flag
 
