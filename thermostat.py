@@ -258,7 +258,7 @@ def detectFaults():
     if(heaton=="ON"):
         tim=int(dt.now().strftime("%H%M"))
         if((tim >= heatonTime + 5) and (temp < heatonTemp)):
-            mqc.publish(preamb+"paradoxFault","1",0,True) #set the flag
+            mqc.publish(preamb+"paradoxFault",1,0,True) #set the flag
 
 
 def displayUpdate():
@@ -290,6 +290,7 @@ def on_connect(client, userdata, flags, rc):
             mqc.publish(str(preamb + "temperature"),temp,0,True)
             mqc.publish(str(preamb + "heaton"),heaton,0,True)
             mqc.publish(str(preamb + "mode"),mode,0,True)
+            mqc.publish(preamb+"paradoxFault",0,0,True)
             mqc.push_update=False
     else:
         logging.warning("MQTT:Connecting Failed, return-code=" + str(rc))
