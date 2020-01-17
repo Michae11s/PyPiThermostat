@@ -119,8 +119,8 @@ ecoRange=5
 ThermostatRange=1.0 #max distance temp can be below setpoint before heat kicks on
 
 #min on off times seconds
-minON=180
-minOFF=60
+minON=300
+minOFF=180
 
 #amount of time between samples in seconds
 PollingRate=15
