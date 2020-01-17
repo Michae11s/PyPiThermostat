@@ -24,7 +24,7 @@ import logging
 
 logging.basicConfig(
     format='%(asctime)-19s:%(levelname)s:%(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     datefmt='%Y-%m-%d|%H:%M:%S',
     filename='/home/pi/build/PyPiThermostat/py.log')
 
@@ -223,7 +223,9 @@ def heatActiv():
             lastheaton=heaton
             logging.info("HEATING:Heat is now: " + str(heaton))
             heatonTemp=temp
+            logging.debug("temp when heat was turned on" + str(heatonTemp))
             heatonTime=timenow
+            logging.debug("time the heat was turned on" + str(heatonTime))
         elif((heaton=="OFF") and (timenow > OnTime+minON)):
             ###*** Turn heat off here ***##
             relay.value=False
@@ -256,14 +258,14 @@ def scheduleAdjust():
 # function to detect when the heat is on but not working
 def detectFaults():
     if(heaton=="ON"):
-        tim=time.time()
-        logging.debug("Time now is " + str(tim))
         logging.debug("current temp " + str(temp))
-        logging.debug("time the heat was turned on" + str(heatonTime))
-        logging.debug("temp when heat was turned on" + str(heatonTemp))
-        if((tim >= heatonTime + 300) and (temp <= heatonTemp + 0.5)):
-            logging.warning("HEATING:Heat has been running for 5 min, no increase in temperature! throwing flag")
-            mqc.publish(preamb+"paradoxFault",1,0,True) #set the flag
+        if(temp <= heatonTemp + 0.5):
+            tim=time.time()
+            logging.debug("Time now is " + str(tim))
+
+            if(tim >= heatonTime + 300):
+                logging.warning("HEATING:Heat has been running for 5 min, no increase in temperature! throwing flag")
+                mqc.publish(preamb+"paradoxFault",1,0,True) #set the flag
 
 
 def displayUpdate():
