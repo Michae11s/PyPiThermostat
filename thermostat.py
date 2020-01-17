@@ -147,6 +147,8 @@ mode="off"
 temp=0.0
 hum=0
 heaton="null"
+heatonTemp=0.0
+heatonTime=int(dt.now().strftime("%H%M"))
 
 lastTime=0
 lasttemp=0.0
@@ -220,6 +222,8 @@ def heatActiv():
             mqc.publish(preamb+"heaton",heaton,0,True)
             lastheaton=heaton
             logging.info("HEATING:Heat is now: " + str(heaton))
+            heatonTemp=temp
+            heatonTime=int(dt.now().strftime("%H%M"))
         elif((heaton=="OFF") and (timenow > OnTime+minON)):
             ###*** Turn heat off here ***##
             relay.value=False
@@ -248,6 +252,13 @@ def scheduleAdjust():
     elif(Hr == shed.wait):#we must be waiting, check if we are done
         logging.debug("SCHEDULE:we have waited long enough! resuming scheduled temperatures")
         shed.clrWait()
+
+# function to detect when the heat is on but not working
+def detectFaults():
+    if(heaton=="ON"):
+        tim=int(dt.now().strftime("%H%M"))
+        if((tim >= heatonTime + 5) and (temp < heatonTemp)):
+            mqc.publish(preamb+"paradoxFault","1",0,True) #set the flag
 
 
 def displayUpdate():
