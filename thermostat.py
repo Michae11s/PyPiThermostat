@@ -259,6 +259,8 @@ def scheduleAdjust():
 
 # function to detect when the heat is on but not working
 def detectFaults():
+    global heatonTime
+    global heatonTemp
     if(heaton=="ON"): #only going to fire while we are trying to run the heat
         logging.debug("current temp :")
         logging.debug(str(temp) + " " + str(heatonTemp))
@@ -269,9 +271,14 @@ def detectFaults():
             if(tim >= (heatonTime + 300)):
                 logging.warning("HEATING:Heat has been running for 5 min, no increase in temperature! throwing flag")
                 logging.warning("HEATING:current temp is [" + str(temp) + "] heatonTemp is [" + str(heatonTemp) + "]")
-                mqc.publish(preamb+"paradoxFault",1,0,True) #set the flag
+                mqc.publish("home/flags/msg","Upstairs Thermostat: Heat isn't working.",0,True)
+                mqc.publish("home/flags/flg",1,0,True) #set the flag
 
+                #Lets reset the alarm triggers
+                heatonTime=time.time()
+                heatonTemp=temp
 
+#Update the LCD display
 def displayUpdate():
     tim=dt.now().strftime("%H:%M")
     screen_home= str(tim) + " Set:" + str(setpoint) +"\x00F\n" + str(temp) + "\x00F H:" + str(hum) + "%"
