@@ -271,8 +271,8 @@ def detectFaults():
             if(tim >= (heatonTime + 300)):
                 logging.warning("HEATING:Heat has been running for 5 min, no increase in temperature! throwing flag")
                 logging.warning("HEATING:current temp is [" + str(temp) + "] heatonTemp is [" + str(heatonTemp) + "]")
-                mqc.publish("home/flags/msg","Upstairs Thermostat: Heat isn't working.",0,True)
-                mqc.publish("home/flags/flg",1,0,True) #set the flag
+                mqc.publish("/home/flags/msg","Upstairs Thermostat: Heat isn't working.",0,True)
+                mqc.publish("/home/flags/flg",1,0,True) #set the flag
 
                 #Lets reset the alarm triggers
                 heatonTime=time.time()
