@@ -202,6 +202,12 @@ def heatActiv():
     if(mode=="off"):
         #never turn the heater on
         heaton="OFF"
+        ### lets make sure the heat gets turned off if its on too, just for good measure ###
+        relay.value=False
+        OffTime=timenow
+        mqc.publish(preamb+"heaton",heaton,0,True)
+        lastheaton=heaton
+        logging.info("HEATING:Heat is now: " + str(heaton))
     elif(mode=="heat"):
         #determine if we need heat then act appropriately
         if(temp >= setpoint): #too hot turn off
